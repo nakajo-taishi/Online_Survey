@@ -1,5 +1,5 @@
 body{
-    padding: 10% 10%;
+    padding: 0 10% 0 10%;
     background-color: #164a84;
     color: aliceblue;
 }
@@ -23,7 +23,9 @@ body h2{
     border-radius: 5px;
     min-width: 3em;
     max-width: auto;
+    height: 2em;
     text-align: center;
+    padding: 0.1em 0.1em 0.1em 0.1em;
 }
 
 .option{
