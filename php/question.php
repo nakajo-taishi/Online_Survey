@@ -1,15 +1,16 @@
 <?php
 require "db.php";
 require_once 'auth.php';
-//require_once 'header.php';
+require_once 'header.php';
 require_once 'security.php';
-$q_key = $_GET['question_id'] ?? '';//テストデータ対応
+$q_key = $_GET['question_id'] ?? '';
 
 start_sess();
 $csrf_token = generate_csrf();
 $raw_autosave = $_SESSION['autosave']['answer']['data'] ?? [];
 
 $autosave = [];
+$errors = [];
 
 foreach ($raw_autosave as $key => $value) {
 
@@ -24,16 +25,17 @@ foreach ($autosave as $key => $value) {
     }
 }
 
+//CSS読み込み
+echo "<head><link rel='stylesheet' href='../css/question.css'><link rel='stylesheet' href='../css/footer.css'></head>";
+
 $r = get_survey_by_key($q_key, "question_key");
 if(is_null($r)){
+    echo("<title>存在しないページ</title>");
     echo("アンケートは削除されたか未公開です");
 }else{
     $json = $r["survey_spec"];
-    //以下，本実装
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-        $errors = [];
 
         foreach ($json['questions'] as $index => $question) {
 
@@ -53,24 +55,30 @@ if(is_null($r)){
                 $errors[] = "入力できない文字が含まれます".$_POST[$key]; 
             }  
         }
-
-        foreach ($errors as $error) {
-            echo "<p style='color:red'>{$error}</p>";
-        }
     }
 
+    echo "<title>".$r['title']."</title>";
+    echo "<body>";
+    echo "<main>";
     echo "<h1>".$r['title']."</h1>";
     echo "<p>".$r['survey_spec']["title"]."</p>";
+    echo "<div id='tag'>";
     echo "<ul>";
     foreach($r["survey_spec"]["Survey_tag"] as $tag){
         echo "<li>{$tag}</li>";
     }
-    echo "</ul>";
+    echo "</ul></div>";
+    if(!is_null($errors)){
+        foreach ($errors as $error) {
+            echo "<p style='color:red'>{$error}</p>";
+        }
+    }
     $len = count($json["questions"]);
     echo "<form method='post' action='?question_id={$q_key}' id='main-form'>";
     echo "<input type='hidden' name='csrf_token' value='".htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8')."'>";
+    $id_cnt = 0;//チェックボックス等のid用変数
     for ($i=0; $i<$len; $i++){
-        echo "<div>";
+        echo "<div class='question'>";
         echo "<h2>質問".($i+1).":".$json["questions"][$i]["label"]."</h2>";
         if($json["questions"][$i]["type"]=="multiple"){
             foreach($json["questions"][$i]["options"] as $item){
@@ -83,8 +91,10 @@ if(is_null($r)){
                 ){
                     $checked = 'checked';
                 }
+                $id_cnt+=1;
+                echo "<label class='option'>";
                 echo "<input type='checkbox' name='q{$i}[]' value='{$item}' {$checked}>";
-                echo "<label>{$item}</label><br>";
+                echo "{$item}</label>";
             }
         }elseif($json["questions"][$i]["type"]=="single"){
             foreach($json["questions"][$i]["options"] as $item){
@@ -93,8 +103,10 @@ if(is_null($r)){
                 if ($current === $item){
                     $checked = 'checked';
                 }
+                $id_cnt+=1;
+                echo "<label class='option'>";
                 echo "<input type='radio' name='q{$i}' value='{$item}' required {$checked}>";
-                echo "<label>".$item."</label><br>";
+                echo "{$item}</label>";
             }
         }elseif($json["questions"][$i]["type"]=="text"){
             $value="";
@@ -103,27 +115,40 @@ if(is_null($r)){
                 ENT_QUOTES,
                 'UTF-8'
             );
-            echo "<input type='text' name='q{$i}' value='{$value}' required>";
+            //echo "<input type='text' name='q{$i}' value='{$value}' required>";
+            echo "<div class='q_text'>";
+            echo "<textarea name='q{$i}' maxlength='500' required>{$value}</textarea>";
+            echo "</div>";
         }
         echo "</div>"; 
     }
     if(isset($_SESSION["user_id"])){
 
     }else{
+        echo "<div class='question'>";
         echo "<h2>性別を選択してください</h2>";
-        echo "<input type='checkbox' name='Q_gender' value='man'>";
-        echo "<label>男性</label><br>";
-        echo "<input type='checkbox' name='Q_gender' value='woman'>";
-        echo "<label>女性</label><br>";
-        echo "<input type='checkbox' name='Q_gender' value='other'>";
-        echo "<label>その他</label><br>";
-        echo "<input type='checkbox' name='Q\gender' value='doNotAnswer'>";
-        echo "<label>回答しない</label><br>";
+        echo "<label class='option'>";
+        echo "<input type='radio' name='Q_gender' value='man' required>";
+        echo "男性</label>";
+        echo "<label class='option'>";
+        echo "<input type='radio' name='Q_gender' value='woman' required>";
+        echo "女性</label>";
+        echo "<label class='option'>";
+        echo "<input type='radio' name='Q_gender' value='other' required>";
+        echo "その他</label>";
+        echo "<label class='option'>";
+        echo "<input type='radio' name='Q_gender' value='doNotAnswer' required>";
+        echo "回答しない</label>";
+        echo "</div><div class=question>";
         echo "<h2>生年月日を入力してください</h2>";
         $max_date = date('Y-m-d');
         echo "<input type='date' name='birthday' min='1900-01-01' max='{$max_date}' required><br>";
+        echo "</div>";
     }
-    echo "<button type='submit'>送信</button>";
+    echo "<div id='submit'><button type='submit'>送信</button></div>";
     echo "</form>";
     echo "<script src='../js/api_manager.js'></script>";
+    echo "</main>";
+    require_once "footer.php";
+    echo "</body>";
 }
