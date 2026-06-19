@@ -274,6 +274,8 @@ function get_homepage_survey_list(string $listType, string $sortOrder, ?int $use
             }
             break;
         case 'all':
+            $conditions[] = 's.end_at > NOW()';
+            break;
         default:
             break;
     }
@@ -317,8 +319,17 @@ function get_homepage_survey_list(string $listType, string $sortOrder, ?int $use
 function extend_survey_deadline(int $survey_id, int $user_id, string $new_end_at): ?string
 {
     try {
+        // 入力値の妥当性チェック
+        $parsedTime = strtotime($new_end_at);
+        if (!$parsedTime || $parsedTime <= time()) {
+            return null; // 無効または過去の時刻
+        }
+
+        // タイムゾーン対応：明示的にUTCで統一
+        $newEndAtFormatted = date('c', $parsedTime);
+
         $sql = "UPDATE surveys 
-                SET end_at = GREATEST(:new_end_at::TIMESTAMPTZ, NOW()), 
+                SET end_at = :new_end_at::TIMESTAMPTZ,
                     updated_at = NOW()
                 WHERE survey_id = :survey_id AND creator_id = :user_id
                 RETURNING end_at";
@@ -326,14 +337,14 @@ function extend_survey_deadline(int $survey_id, int $user_id, string $new_end_at
         $stmt = executeQuery($sql, [
             ':survey_id' => $survey_id,
             ':user_id'   => $user_id,
-            ':new_end_at' => $new_end_at,
+            ':new_end_at' => $newEndAtFormatted,
         ]);
+        
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($result) {
-            // 成功：更新後の日時を返す
             return date('Y.m.d H:i', strtotime($result['end_at']));
         }
-        // 対象が見つからない（他人のアンケートなど）場合はnull
+        
         return null;
     } catch (PDOException $e) {
         renderDbError($e);
