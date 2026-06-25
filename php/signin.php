@@ -40,13 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = get_user_by_name($username);
 
         // 該当するユーザーが存在し、パスワードが一致するか検証
-        if ($user && password_verify($password, $user['password'])) {
+        if ($user && password_verify($password, $user['password_hash'])) {
             // セッション固定攻撃対策：ログイン成功時にセッションIDを再生成
             session_regenerate_id(true);
 
             // セッションにユーザー情報を格納
-            $_SESSION['user_id'] = $user['id']; 
-            $_SESSION['username'] = $user['username'];
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['username'] = $user['account_name'];
             $_SESSION['last_acc'] = time(); // タイムアウト判定用のタイムスタンプ
 
             // 事前に遷移元のURLが記録されていればそこへ、なければ管理画面等へリダイレクト
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form action="signin.php" method="POST" class="space-y-4">
-            <input type="hidden" name="csrf_token" value=\"<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>\">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
 
             <div>
                 <label class="block text-gray-700 font-medium mb-1">ユーザー名</label>
