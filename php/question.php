@@ -76,7 +76,7 @@ if(is_null($r)){
         }
     }
     $len = count($json["questions"]);
-    echo "<form method='post' action='?question_id={$q_key}' id='main-form'>";
+    echo "<form method='post' action='question_confirm.php?question_id={$q_key}' id='main-form'>";
     echo "<input type='hidden' name='csrf_token' value='".htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8')."'>";
     $id_cnt = 0;//チェックボックス等のid用変数
     for ($i=0; $i<$len; $i++){
@@ -147,7 +147,7 @@ if(is_null($r)){
         echo "<input type='date' name='birthday' min='1900-01-01' max='{$max_date}' required><br>";
         echo "</div>";
     }
-    echo "<div id='submit'><button method='confirm_db.php' type='submit'>送信</button></div>";
+    echo "<div id='submit'><button type='submit'>確認画面へ</button></div>";
     echo "</form>";
     echo "<script src='../js/api_manager.js'></script>";
     echo "</main>";
