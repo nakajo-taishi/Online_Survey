@@ -26,6 +26,8 @@ $db_user = getenv('DB_USER') ?: 'group1';
 $db_pass = getenv('DB_PASS') ?: 'Group1';
 $pdo = null;
 
+error_log(sprintf('[db] connecting to DB host=%s dbname=%s user=%s', $host, 'group1db', $db_user));
+
 try {
     $pdo = new PDO($dsn, $db_user, $db_pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -33,6 +35,7 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 } catch (PDOException $e) {
+    error_log(sprintf('[db] connection failed: %s', $e->getMessage()));
     renderDbError($e);
 }
 
@@ -64,6 +67,7 @@ function executeQuery(string $sql, array $params = []): PDOStatement
         $stmt->execute($params);
         return $stmt;
     } catch (PDOException $e) {
+        error_log(sprintf('[db] query failed: %s SQL=%s PARAMS=%s', $e->getMessage(), $sql, json_encode($params, JSON_UNESCAPED_UNICODE)));
         renderDbError($e);
     }
 }
