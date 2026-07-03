@@ -1,17 +1,9 @@
 <?php
 require_once 'security.php';
+require_once __DIR__ . '/error.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
-}
-
-// 送信された csrf_token の整合性を検証
-$posted_token = $_SESSION['csrf_token'] ?? '';
-$session_token = $_SESSION['csrf_token'] ?? '';
-
-if (empty($posted_token) || $posted_token !== $session_token) {
-    http_response_code(403);
-    exit("403 Forbidden: 不正なリクエストです。");
 }
 
 // 入力データの受け取り
@@ -21,9 +13,10 @@ $agreed_terms = isset($_SESSION['agreed_terms']) ? true : false;
 
 // バリデーションチェック（不備があれば入力へ戻す）
 if ($username === '' || $password === '' || !$agreed_terms) {
-    header('Location: signup.php');
-    exit;
+    renderError('登録情報が不足しています。最初からやり直してください。', 400, 'app', 'WARNING');
 }
+
+$session_token = $_SESSION['csrf_token'] ?? '';
 
 // 一時的にデータをセッション(signup_input)に保存
 $_SESSION['signup_input'] = [

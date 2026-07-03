@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/error.php';
 start_sess();
 require_once __DIR__ . '/db.php';
 
@@ -7,7 +8,7 @@ require_once __DIR__ . '/db.php';
 $result_key = $_GET["key"] ?? '';
 $user_id = $_SESSION['user_id'] ?? 1;
 if ($result_key === '') {
-    die("エラー：無効なアクセスです。URLをご確認ください。");
+    renderError('エラー：無効なアクセスです。URLをご確認ください。', 400, 'app', 'WARNING', null, 'Invalid Access');
 }
 //====================================
 // ① 集計データ取得（グラフ用）
@@ -16,7 +17,7 @@ if ($result_key === '') {
 $survey = get_survey_by_key($result_key, 'result');
 
 if ($survey === null) {
-    die("エラー：指定されたアンケートが見つかりません。");
+    renderError('エラー：指定されたアンケートが見つかりません。', 404, 'app', 'WARNING', null, 'Survey Not Found');
 }
 
 // 取得したデータから survey_id を抽出

@@ -709,7 +709,10 @@ try {
                     <a href="signin.php" class="oval-btn btn-signin">サインイン →</a>
                 <?php else: ?>
                     <a href="unsubscription.php" class="oval-btn btn-withdraw">退会 →</a>
-                    <a href="signout.php" class="oval-btn btn-signout">サインアウト →</a>
+                    <form action="signout.php" method="post" style="margin:0;">
+                        <input type="hidden" name="csrf_token" value="<?php echo h($_SESSION['csrf_token'] ?? ''); ?>">
+                        <button type="submit" class="oval-btn btn-signout">サインアウト →</button>
+                    </form>
                     <a href="survey_form.php" class="oval-btn btn-create">アンケートフォーム作成 →</a>
                     <a href="profile.php" class="oval-btn btn-profile">ユーザ情報の変更 →</a>
                 <?php endif; ?>
@@ -933,7 +936,7 @@ try {
                                             <div class="survey-creator">作成: <?php echo h($survey['creator'] ?? '不明'); ?></div>
                                         </div>
                                         <div class="survey-actions">
-                                            <a href="question.php?id=<?php echo h($survey['survey_id']); ?>" class="action-inline-btn btn-answer">回答(<?php echo h($start_date_str); ?>~)</a>
+                                            <a href="question.php?id=<?php echo h($survey['question_key']); ?>" class="action-inline-btn btn-answer">回答(<?php echo h($start_date_str); ?>~)</a>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
