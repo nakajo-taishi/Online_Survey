@@ -20,6 +20,60 @@ function getApiEndpoint() {
     return new URL('./api.php', window.location.href).toString();
 }
 
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+async function readErrorResponse(response) {
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+    try {
+        if (contentType.includes('application/json')) {
+            const parsed = await response.json().catch(() => null);
+            if (parsed) {
+                return parsed.message || parsed.error || parsed.detail || JSON.stringify(parsed);
+            }
+        }
+
+        const text = await response.text().catch(() => '');
+        if (text) {
+            return text.replace(/\s+/g, ' ').trim().slice(0, 800);
+        }
+    } catch (error) {
+        return `レスポンスの読み取りに失敗しました: ${error.message}`;
+    }
+
+    return '';
+}
+
+function showApiError(message, detail = '', endpoint = '') {
+    const detailsText = [detail, endpoint ? `送信先: ${endpoint}` : '']
+        .filter(Boolean)
+        .join('\n\n');
+    const fullMessage = detailsText ? `${message}\n\n${detailsText}` : message;
+
+    console.error('[API Error]', fullMessage);
+
+    const existing = document.getElementById('api-error-banner');
+    if (existing) existing.remove();
+
+    const banner = document.createElement('div');
+    banner.id = 'api-error-banner';
+    banner.style.cssText = 'margin:12px 0;padding:12px 14px;border:1px solid #dc2626;background:#fee2e2;color:#991b1b;border-radius:8px;white-space:pre-wrap;font-size:14px;line-height:1.5;';
+    banner.innerHTML = `<strong>通信エラー</strong><br>${escapeHtml(message)}${detailsText ? `<br><br><span style="font-family:monospace">${escapeHtml(detailsText)}</span>` : ''}`;
+
+    const target = document.getElementById('comment-list') || document.getElementById('save-status') || document.querySelector('main');
+    if (target) {
+        target.insertAdjacentElement('beforebegin', banner);
+    }
+
+    alert(fullMessage);
+}
+
 function setLikeButtonPending(commentId, pending) {
     const countElement = document.getElementById(`like-count-${commentId}`);
     const button = countElement ? countElement.closest('button') : null;
@@ -81,13 +135,8 @@ async function postComment() {
         });
 
         if (!response.ok) {
-            const contentType = response.headers.get('content-type') || '';
-            let msg = `通信エラー: ${response.status}`;
-            if (contentType.includes('application/json')) {
-                const err = await response.json().catch(() => null);
-                if (err && err.message) msg = err.message;
-            }
-            alert(msg);
+            const errorDetail = await readErrorResponse(response);
+            showApiError(`コメント投稿に失敗しました。(${response.status} ${response.statusText || ''})`, errorDetail, API_ENDPOINT);
             return;
         }
 
@@ -155,7 +204,8 @@ async function toggleLike(commentId) {
         });
 
         if (!response.ok) {
-            console.warn('いいね通信エラー', response.status);
+            const errorDetail = await readErrorResponse(response);
+            showApiError(`いいね処理に失敗しました。(${response.status} ${response.statusText || ''})`, errorDetail, API_ENDPOINT);
             return;
         }
 
@@ -236,7 +286,8 @@ async function autoSave(type) {
         });
 
         if (!response.ok) {
-            console.debug('Silent Save failed, server error', response.status);
+            const errorDetail = await readErrorResponse(response);
+            console.debug('Silent Save failed', response.status, errorDetail);
             return;
         }
 
