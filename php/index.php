@@ -158,14 +158,14 @@ try {
     // 1. ログインユーザー専用データ（MY SURVEY）
     if ($is_logged_in && $current_user_id !== null) {
         // 作成したアンケート
-        $all_created = get_homepage_survey_list('作成したアンケート', $sort_cre, $current_user_id);
+        $all_created = get_homepage_survey_list('作成したアンケート', $sort_cre, $current_user_id, 0, 0);
         $total_created = count($all_created);
         $total_pages_created = (int)ceil($total_created / $limit);
         if ($total_pages_created < 1) $total_pages_created = 1;
         $created_surveys = array_slice($all_created, $offset_created, $limit);
 
         // 回答したアンケート
-        $all_answered = get_homepage_survey_list('回答したアンケート', $sort_ans, $current_user_id);
+        $all_answered = get_homepage_survey_list('回答したアンケート', $sort_ans, $current_user_id, 0, 0);
         $total_answered = count($all_answered);
         $total_pages_answered = (int)ceil($total_answered / $limit);
         if ($total_pages_answered < 1) $total_pages_answered = 1;
@@ -173,14 +173,14 @@ try {
     }
     
     // 2. 全体公開用アンケート（SURVEY）
-    $all_active_surveys = get_homepage_survey_list('アンケート', $sort_act, null);
+    $all_active_surveys = get_homepage_survey_list('アンケート', $sort_act, null, 0, 0);
     $total_active = count($all_active_surveys);
     $total_pages_active = (int)ceil($total_active / $limit);
     if ($total_pages_active < 1) $total_pages_active = 1;
     $active_surveys = array_slice($all_active_surveys, $offset_active, $limit);
 
     // 3. 全体公開用調査結果（RESULTS）
-    $all_result_surveys = get_homepage_survey_list('調査結果', $sort_res, null);
+    $all_result_surveys = get_homepage_survey_list('調査結果', $sort_res, null, 0, 0);
     $total_result = count($all_result_surveys);
     $total_pages_result = (int)ceil($total_result / $limit);
     if ($total_pages_result < 1) $total_pages_result = 1;

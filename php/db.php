@@ -226,7 +226,7 @@ function get_all_survey_titles(): array
  * @param int $offset 取得開始位置
  * @return array
  */
-function get_homepage_survey_list(string $listType, string $sortOrder, ?int $user_id = null, int $limit = 100, int $offset = 0): array
+function get_homepage_survey_list(string $listType, string $sortOrder, ?int $user_id = null, int $limit = 0, int $offset = 0): array
 {
     $typeMap = [
         '作成したアンケート' => 'created',
@@ -309,11 +309,11 @@ function get_homepage_survey_list(string $listType, string $sortOrder, ?int $use
 
     $limit = (int)$limit;
     $offset = (int)$offset;
-    if ($limit <= 0) {
-        $limit = 100;
-    }
     if ($offset < 0) {
         $offset = 0;
+    }
+    if ($limit < 0) {
+        $limit = 0;
     }
 
     usort($rows, static function (array $a, array $b) use ($sortOrder): int {
@@ -347,7 +347,11 @@ function get_homepage_survey_list(string $listType, string $sortOrder, ?int $use
         }
     });
 
-    $rows = array_slice($rows, $offset, $limit);
+    if ($limit > 0) {
+        $rows = array_slice($rows, $offset, $limit);
+    } else {
+        $rows = array_slice($rows, $offset);
+    }
 
     return array_map(static function (array $row): array {
         return [
